@@ -4,11 +4,14 @@ backend/__pycache__/
 backend/**/*.pyc
 backend/**/*.pyo
 backend/**/*.pyd
-backend/*.env
+backend/.env
 
 # Node
 frontend/node_modules/
 frontend/dist/
+frontend/.env
+
+# .env.example 파일은 깃헙에 올라가야 하므로 제외하지 않음
 
 # VS Code
 .vscode/
