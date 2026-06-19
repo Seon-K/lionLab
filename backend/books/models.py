@@ -21,19 +21,28 @@ class Book(models.Model):
     isbn = models.CharField(max_length=50, blank=True)
 
     # 거래 관련 필드
-    trade_type = models.CharField(max_length=10, choices=TRADE_TYPE_CHOICES)
+    trade_type = models.CharField(max_length=10, choices=TRADE_TYPE_CHOICES, default='sell')
+    original_price = models.PositiveIntegerField(default=0)
     price = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='available')
-    subject = models.CharField(max_length=100, blank=True)  # 과목명
-    condition = models.TextField(blank=True)  # 책 상태 설명
+    subject = models.CharField(max_length=100, blank=True)
+    condition = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property  # 추가: DB에 저장 안 하고 호출할 때마다 자동 계산
+    def discount_rate(self):  # 추가: book.discount_rate 로 호출 가능
+        """할인율 자동 계산 (%)"""  # 추가
+        if self.original_price and self.original_price > 0:  # 추가: 0으로 나누기 방지
+            rate = (1 - (self.price / self.original_price)) * 100  # 추가: 할인율 공식
+            return round(rate)  # 추가: 소수점 반올림
+        return 0  # 추가: 정가 없으면 할인율 0
 
     def __str__(self):
         return f"[{self.trade_type}] {self.title}"
 
 
-class TradeRequest(models.Model):
+class TradeRequest(models.Model): 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='requests')
     message = models.TextField()
     is_accepted = models.BooleanField(default=False)

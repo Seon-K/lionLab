@@ -1,6 +1,6 @@
 from rest_framework import viewsets
-from .models import Course
-from .serializers.course_serializer import CourseSerializer
+from ..models import Course
+from ..serializers.course_serializer import CourseSerializer
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
