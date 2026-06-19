@@ -1,3 +1,5 @@
+# 수정: views/ 폴더와 views.py 가 공존할 때 Python은 폴더(패키지)를 우선 인식
+# 수정: 기존 views.py 의 search_book 이 무효화되어 여기로 이동
 from django.http import JsonResponse
 from ..isbn_service import get_book_info
 

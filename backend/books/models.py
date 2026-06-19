@@ -21,8 +21,8 @@ class Book(models.Model):
     isbn = models.CharField(max_length=50, blank=True)
 
     # 거래 관련 필드
-    trade_type = models.CharField(max_length=10, choices=TRADE_TYPE_CHOICES, default='sell')
-    original_price = models.PositiveIntegerField(default=0)
+    trade_type = models.CharField(max_length=10, choices=TRADE_TYPE_CHOICES, default='sell')  # 수정: 필드 누락으로 __str__ 오류 → 재추가
+    original_price = models.PositiveIntegerField(default=0)  # 추가: 정가 (할인율 계산용)
     price = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='available')
     subject = models.CharField(max_length=100, blank=True)
@@ -42,7 +42,7 @@ class Book(models.Model):
         return f"[{self.trade_type}] {self.title}"
 
 
-class TradeRequest(models.Model): 
+class TradeRequest(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='requests')
     message = models.TextField()
     is_accepted = models.BooleanField(default=False)

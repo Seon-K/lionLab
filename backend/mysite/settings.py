@@ -1,10 +1,11 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # 수정: python-dotenv 추가
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env")  # 수정: .env 파일 자동 로드
 
+# 수정: SECRET_KEY 하드코딩 제거, .env 에서 읽도록 변경
 SECRET_KEY = os.environ.get("SECRET_KEY", "replace-me")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -17,7 +18,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'corsheaders',
-    'rest_framework',
+    'rest_framework',  # 수정: djangorestframework 추가
     'books',
 ]
 

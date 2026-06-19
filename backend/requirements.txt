@@ -1,5 +1,5 @@
 Django>=4.2
 django-cors-headers>=3.14
-djangorestframework>=3.15
-requests>=2.31
-python-dotenv>=1.0
+djangorestframework>=3.15  # 수정: ViewSet/Serializer 사용에 필요, 누락되어 있었음
+requests>=2.31             # 수정: isbn_service.py 에서 사용 중이었으나 누락
+python-dotenv>=1.0         # 수정: .env 로드에 필요, 누락되어 있었음
