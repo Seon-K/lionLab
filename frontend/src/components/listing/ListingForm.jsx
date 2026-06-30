@@ -1,4 +1,5 @@
 ﻿import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { books } from '../../api/mockData'
 import { calculateDiscount, formatPrice } from '../../utils/format'
 import Button from '../common/Button'
@@ -15,6 +16,7 @@ const defaultValues = {
 }
 
 function ListingForm({ mode = 'create', initialValues, onSubmit }) {
+  const navigate = useNavigate()
   const [form, setForm] = useState(() => ({
     ...defaultValues,
     ...initialValues,
@@ -37,12 +39,14 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    onSubmit?.({
+    const payload = {
       ...form,
       book: selectedBook,
       used_price: Number(form.used_price),
       has_writing: form.has_writing === 'true',
-    })
+    }
+    onSubmit?.(payload)
+    navigate(mode === 'edit' && initialValues?.id ? /listings/ : '/listings')
   }
 
   return (
@@ -75,24 +79,11 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
         <div className="form-grid two-columns">
           <label>
             판매자 이름
-            <input
-              name="seller_name"
-              value={form.seller_name}
-              onChange={handleChange}
-              placeholder="예: 김서연"
-              required
-            />
+            <input name="seller_name" value={form.seller_name} onChange={handleChange} placeholder="예: 김서연" required />
           </label>
           <label>
             중고 판매가
-            <input
-              name="used_price"
-              value={form.used_price}
-              onChange={handleChange}
-              inputMode="numeric"
-              placeholder="예: 28000"
-              required
-            />
+            <input name="used_price" value={form.used_price} onChange={handleChange} inputMode="numeric" placeholder="예: 28000" required />
           </label>
           <label>
             책 상태
@@ -121,23 +112,11 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
           )}
           <label className="wide-field">
             거래 장소
-            <input
-              name="trade_place"
-              value={form.trade_place}
-              onChange={handleChange}
-              placeholder="예: 순천향대 중앙도서관 앞"
-              required
-            />
+            <input name="trade_place" value={form.trade_place} onChange={handleChange} placeholder="예: 순천향대 중앙도서관 앞" required />
           </label>
           <label className="wide-field">
             상세 설명
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              placeholder="책 상태, 필기 정도, 거래 가능 시간 등을 입력하세요."
-              required
-            />
+            <textarea name="description" value={form.description} onChange={handleChange} placeholder="책 상태, 필기 정도, 거래 가능 시간 등을 입력하세요." required />
           </label>
         </div>
       </section>
@@ -158,17 +137,17 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
             <strong>{formatPrice(form.used_price)}</strong>
           </div>
         </div>
-        <p>
-          정가 대비 {originalDiscount}% 할인 · 현재 판매가 대비 {saleDiscount}% 할인
-        </p>
+        <p>정가 대비 {originalDiscount}% 할인 · 현재 판매가 대비 {saleDiscount}% 할인</p>
       </section>
 
       <div className="form-actions">
         <Button type="submit">{mode === 'edit' ? '수정 내용 저장' : '판매글 등록'}</Button>
-        <Button type="button" variant="secondary">취소</Button>
+        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>취소</Button>
       </div>
     </form>
   )
 }
 
 export default ListingForm
+
+

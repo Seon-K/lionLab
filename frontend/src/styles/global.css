@@ -992,3 +992,60 @@ dd {
     height: 98px;
   }
 }
+
+.clickable-card {
+  display: block;
+  color: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.clickable-card:hover {
+  border-color: rgba(47, 111, 237, 0.42);
+  box-shadow: 0 16px 36px rgba(35, 53, 84, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-link-text {
+  display: block;
+  margin: 0 12px 12px;
+  border-radius: 6px;
+  padding: 9px;
+  background: var(--blue);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.banner-button {
+  display: inline-flex;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 7px;
+  padding: 10px 16px;
+  background: white;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.course-filter button.active {
+  border-color: var(--blue);
+  background: #eaf1ff;
+  color: var(--blue);
+}
+
+.course-book-list {
+  margin-top: 18px;
+}
+
+.action-feedback {
+  margin-top: 10px !important;
+  border-radius: 7px;
+  padding: 10px;
+  background: #eef6ff;
+  color: var(--blue) !important;
+}

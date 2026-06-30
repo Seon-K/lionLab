@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+﻿import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { courses, listings } from '../api/mockData'
 import BookSearch from '../components/book/BookSearch'
 import CourseCard from '../components/course/CourseCard'
@@ -11,7 +11,7 @@ function HomePage() {
 
   const handleSearch = (event) => {
     event.preventDefault()
-    navigate(`/books/search?q=${encodeURIComponent(query)}`)
+    navigate(query.trim() ? `/books?q=${encodeURIComponent(query)}` : '/books')
   }
 
   return (
@@ -63,7 +63,7 @@ function HomePage() {
             <h2>최근 올라온 교재</h2>
             <p>지금 바로 거래 가능한 인기 교재입니다.</p>
           </div>
-          <a href="/books/search">교재 더 보기 +</a>
+          <Link to="/books">교재 더 보기 +</Link>
         </div>
         <div className="book-grid">
           {listings.map((listing) => (
@@ -76,7 +76,7 @@ function HomePage() {
         <div>
           <h2>지금 읽고 있는 전공 서적을 돈으로 바꿔보세요.</h2>
           <p>책 정보는 자동으로 채우고, 가격과 상태만 입력하면 판매글을 만들 수 있습니다.</p>
-          <button type="button">판매글 등록하기</button>
+          <Link className="banner-button" to="/listings/new">판매글 등록하기</Link>
         </div>
         <span className="banner-icon">◇</span>
       </section>

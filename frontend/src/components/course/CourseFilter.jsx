@@ -1,9 +1,16 @@
-function CourseFilter({ courses }) {
+﻿function CourseFilter({ courses, selectedDepartment, onSelect }) {
+  const departments = ['전체', ...new Set(courses.map((course) => course.department))]
+
   return (
     <div className="course-filter">
-      {courses.map((course) => (
-        <button key={course.id} type="button">
-          {course.department}
+      {departments.map((department) => (
+        <button
+          key={department}
+          className={selectedDepartment === department ? 'active' : ''}
+          type="button"
+          onClick={() => onSelect(department)}
+        >
+          {department}
         </button>
       ))}
     </div>
