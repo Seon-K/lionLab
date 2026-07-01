@@ -1,11 +1,9 @@
-function CourseCard({ course }) {
+﻿function CourseCard({ course }) {
   return (
     <article className="course-card">
-      <span>{course.department}</span>
+      <span>{course.department || '학과 미지정'}</span>
       <strong>{course.course_name}</strong>
-      <p>
-        {course.professor_name} · {course.grade}학년 · {course.semester}
-      </p>
+      <p>{course.professor_name || '교수 미정'}</p>
     </article>
   )
 }

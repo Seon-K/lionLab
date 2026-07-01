@@ -1,13 +1,27 @@
-﻿import { useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { courses, listings } from '../api/mockData'
+import { getCourses } from '../api/courseApi'
+import { getListings } from '../api/listingApi'
 import BookSearch from '../components/book/BookSearch'
+import Loading from '../components/common/Loading'
 import CourseCard from '../components/course/CourseCard'
 import ListingCard from '../components/listing/ListingCard'
 
 function HomePage() {
   const [query, setQuery] = useState('')
+  const [courses, setCourses] = useState([])
+  const [listings, setListings] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    Promise.all([getListings({ ordering: '-created_at' }), getCourses()])
+      .then(([listingData, courseData]) => {
+        setListings(listingData.slice(0, 4))
+        setCourses(courseData.slice(0, 2))
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   const handleSearch = (event) => {
     event.preventDefault()
@@ -65,11 +79,15 @@ function HomePage() {
           </div>
           <Link to="/books">교재 더 보기 +</Link>
         </div>
-        <div className="book-grid">
-          {listings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
-        </div>
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <div className="book-grid">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="blue-banner">

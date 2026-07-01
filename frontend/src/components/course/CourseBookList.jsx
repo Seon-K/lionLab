@@ -1,13 +1,15 @@
-﻿import BookCard from '../book/BookCard'
-import { listings } from '../../api/mockData'
+﻿import EmptyState from '../common/EmptyState'
+import BookCard from '../book/BookCard'
 
-function CourseBookList({ books }) {
-  const listingByBookId = new Map(listings.map((listing) => [listing.book.id, listing]))
+function CourseBookList({ listings = [] }) {
+  if (listings.length === 0) {
+    return <EmptyState title="연결된 교재가 없습니다." description="다른 학과 필터를 선택해 보세요." />
+  }
 
   return (
     <div className="book-grid course-book-list">
-      {books.map((book) => (
-        <BookCard key={book.id} book={book} listing={listingByBookId.get(book.id)} />
+      {listings.map((listing) => (
+        <BookCard key={listing.id} book={listing.book} listing={listing} />
       ))}
     </div>
   )

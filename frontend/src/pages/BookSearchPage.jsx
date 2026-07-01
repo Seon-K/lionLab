@@ -1,10 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { listings } from '../api/mockData'
 import { searchBooks } from '../api/bookApi'
+import { getListings } from '../api/listingApi'
 import BookCard from '../components/book/BookCard'
 import BookSearch from '../components/book/BookSearch'
 import EmptyState from '../components/common/EmptyState'
+import Loading from '../components/common/Loading'
 
 const PAGE_SIZE = 3
 
@@ -12,18 +13,24 @@ function BookSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [results, setResults] = useState([])
+  const [listings, setListings] = useState([])
   const [page, setPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+
 
   useEffect(() => {
-    searchBooks(query).then((books) => {
-      setResults(books)
-      setPage(1)
-    })
+    Promise.all([searchBooks(query), getListings()])
+      .then(([books, listingData]) => {
+        setResults(books)
+        setListings(listingData)
+        setPage(1)
+      })
+      .finally(() => setIsLoading(false))
   }, [query])
 
   const listingByBookId = useMemo(
-    () => new Map(listings.map((listing) => [listing.book.id, listing])),
-    [],
+    () => new Map(listings.filter((listing) => listing.book).map((listing) => [listing.book.id, listing])),
+    [listings],
   )
 
   const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE))
@@ -50,7 +57,9 @@ function BookSearchPage() {
         <BookSearch query={query} onQueryChange={setQuery} onSubmit={handleSubmit} compact />
       </section>
 
-      {results.length === 0 ? (
+      {isLoading ? (
+        <Loading />
+      ) : results.length === 0 ? (
         <EmptyState title="검색 결과가 없습니다." description="책 제목, ISBN, 저자명을 다시 입력해 보세요." />
       ) : (
         <section className="search-grid">
@@ -60,11 +69,9 @@ function BookSearchPage() {
         </section>
       )}
 
-      {results.length > PAGE_SIZE && (
+      {!isLoading && results.length > PAGE_SIZE && (
         <nav className="pagination" aria-label="전체 교재 페이지">
-          <button type="button" onClick={() => movePage(page - 1)} disabled={page === 1}>
-            ‹
-          </button>
+          <button type="button" onClick={() => movePage(page - 1)} disabled={page === 1}>‹</button>
           {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
             <button
               key={pageNumber}
@@ -75,9 +82,7 @@ function BookSearchPage() {
               {pageNumber}
             </button>
           ))}
-          <button type="button" onClick={() => movePage(page + 1)} disabled={page === pageCount}>
-            ›
-          </button>
+          <button type="button" onClick={() => movePage(page + 1)} disabled={page === pageCount}>›</button>
         </nav>
       )}
     </main>
@@ -85,3 +90,5 @@ function BookSearchPage() {
 }
 
 export default BookSearchPage
+
+

@@ -1,11 +1,15 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { books } from '../../api/mockData'
+import { getBooks } from '../../api/bookApi'
+import { getCourses } from '../../api/courseApi'
+import { createListing, updateListing } from '../../api/listingApi'
 import { calculateDiscount, formatPrice } from '../../utils/format'
 import Button from '../common/Button'
+import Loading from '../common/Loading'
 
 const defaultValues = {
-  bookId: books[0]?.id ?? '',
+  bookId: '',
+  courseId: '',
   seller_name: '',
   used_price: '',
   book_condition: '상',
@@ -17,27 +21,46 @@ const defaultValues = {
 
 function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const navigate = useNavigate()
+  const [books, setBooks] = useState([])
+  const [courses, setCourses] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [form, setForm] = useState(() => ({
     ...defaultValues,
     ...initialValues,
-    bookId: initialValues?.book?.id ?? initialValues?.bookId ?? defaultValues.bookId,
+    bookId: initialValues?.book?.id ?? initialValues?.bookId ?? '',
+    courseId: initialValues?.course?.id ?? initialValues?.courseId ?? '',
+    used_price: initialValues?.used_price ?? initialValues?.price ?? '',
     has_writing: String(initialValues?.has_writing ?? defaultValues.has_writing),
   }))
 
+  useEffect(() => {
+    Promise.all([getBooks(), getCourses()])
+      .then(([bookData, courseData]) => {
+        setBooks(bookData)
+        setCourses(courseData)
+        setForm((current) => ({
+          ...current,
+          bookId: current.bookId || bookData[0]?.id || '',
+          courseId: current.courseId || courseData[0]?.id || '',
+        }))
+      })
+      .finally(() => setIsLoading(false))
+  }, [])
+
   const selectedBook = useMemo(
     () => books.find((book) => book.id === Number(form.bookId)) ?? books[0],
-    [form.bookId],
+    [books, form.bookId],
   )
 
-  const originalDiscount = calculateDiscount(selectedBook.original_price, form.used_price)
-  const saleDiscount = calculateDiscount(selectedBook.sale_price, form.used_price)
+  const originalDiscount = calculateDiscount(selectedBook?.original_price, form.used_price)
+  const saleDiscount = calculateDiscount(selectedBook?.sale_price, form.used_price)
 
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const payload = {
       ...form,
@@ -45,8 +68,18 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
       used_price: Number(form.used_price),
       has_writing: form.has_writing === 'true',
     }
-    onSubmit?.(payload)
-    navigate(mode === 'edit' && initialValues?.id ? /listings/ : '/listings')
+    const saved = onSubmit
+      ? await onSubmit(payload)
+      : mode === 'edit' && initialValues?.id
+        ? await updateListing(initialValues.id, payload)
+        : await createListing(payload)
+    navigate(mode === 'edit' && saved?.id ? `/listings/${saved.id}` : '/listings')
+  }
+
+  if (isLoading) return <Loading />
+
+  if (!selectedBook) {
+    return <p className="state-box">등록된 교재가 없습니다. 먼저 교재를 등록해 주세요.</p>
   }
 
   return (
@@ -57,9 +90,16 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
           책 선택
           <select name="bookId" value={form.bookId} onChange={handleChange}>
             {books.map((book) => (
-              <option key={book.id} value={book.id}>
-                {book.title}
-              </option>
+              <option key={book.id} value={book.id}>{book.title}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          연결 수업
+          <select name="courseId" value={form.courseId} onChange={handleChange}>
+            <option value="">선택 안 함</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>{course.course_name}</option>
             ))}
           </select>
         </label>
@@ -79,7 +119,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
         <div className="form-grid two-columns">
           <label>
             판매자 이름
-            <input name="seller_name" value={form.seller_name} onChange={handleChange} placeholder="예: 김서연" required />
+            <input name="seller_name" value={form.seller_name} onChange={handleChange} placeholder="예: 김서연" />
           </label>
           <label>
             중고 판매가
@@ -112,11 +152,11 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
           )}
           <label className="wide-field">
             거래 장소
-            <input name="trade_place" value={form.trade_place} onChange={handleChange} placeholder="예: 순천향대 중앙도서관 앞" required />
+            <input name="trade_place" value={form.trade_place} onChange={handleChange} placeholder="예: 순천향대 중앙도서관 앞" />
           </label>
           <label className="wide-field">
             상세 설명
-            <textarea name="description" value={form.description} onChange={handleChange} placeholder="책 상태, 필기 정도, 거래 가능 시간 등을 입력하세요." required />
+            <textarea name="description" value={form.description} onChange={handleChange} placeholder="책 상태, 필기 정도, 거래 가능 시간 등을 입력하세요." />
           </label>
         </div>
       </section>
@@ -149,5 +189,3 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
 }
 
 export default ListingForm
-
-
