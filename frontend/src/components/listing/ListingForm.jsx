@@ -55,7 +55,6 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchMessage, setSearchMessage] = useState('')
-  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false)
   const [selectedBook, setSelectedBook] = useState(() => initialValues?.book ?? null)
   const [bookDraft, setBookDraft] = useState(() => ({ ...emptyBookDraft, ...(initialValues?.book ?? {}) }))
   const [coverPreview, setCoverPreview] = useState(initialValues?.book?.cover_image ?? '')
@@ -158,7 +157,6 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const handleSearchQueryChange = (event) => {
     const value = event.target.value
     setSearchQuery(value)
-    setIsSuggestionOpen(Boolean(value.trim()))
     setSearchResults([])
     setSearchMessage('')
   }
@@ -290,14 +288,13 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
             <input
               value={searchQuery}
               onChange={handleSearchQueryChange}
-              onFocus={() => { if (searchQuery.trim()) setIsSuggestionOpen(true) }}
               onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(event) }}
               placeholder="ISBN 또는 책 제목으로 검색"
               aria-label="ISBN 또는 책 제목 검색"
             />
             <Button type="button" disabled={isSearching} onClick={handleSearch}>{isSearching ? '검색 중' : '검색'}</Button>
           </div>
-          {normalizedSearchQuery && isSuggestionOpen && (visibleSuggestions.length > 0 || searchMessage || isSearching) && (
+          {normalizedSearchQuery && (visibleSuggestions.length > 0 || searchMessage || isSearching) && (
             <div className="book-suggestion-box" aria-label="교재 검색 추천어">
               {isSearching && visibleSuggestions.length === 0 && <p className="form-help-text">비슷한 교재를 찾는 중입니다.</p>}
               {searchMessage && !isSearching && <p className="form-help-text">{searchMessage}</p>}
