@@ -1,10 +1,10 @@
-from rest_framework import viewsets
+from rest_framework import filters, viewsets
 from ..models import Book
 from ..serializers.book_serializer import BookSerializer
 
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all()
+    queryset = Book.objects.all().order_by('-created_at')
     serializer_class = BookSerializer
-
-    # 필요시 커스텀 엔드포인트 추가
-    # 예: 검색 엔드포인트를 위해 @action 사용
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', 'isbn', 'authors', 'publisher']
+    ordering_fields = ['created_at', 'original_price', 'price']
