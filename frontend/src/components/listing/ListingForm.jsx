@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createBook, getBooks, searchBookByIsbn, searchBooks } from '../../api/bookApi'
-import { getCourses } from '../../api/courseApi'
+import { createCourse, getCourses } from '../../api/courseApi'
 import { createListing, updateListing } from '../../api/listingApi'
 import { calculateDiscount, formatPrice } from '../../utils/format'
 import Button from '../common/Button'
@@ -10,6 +10,7 @@ import Loading from '../common/Loading'
 const defaultValues = {
   bookId: '',
   courseId: '',
+  courseName: '',
   seller_name: '',
   used_price: '',
   book_condition: '상',
@@ -65,6 +66,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
     ...initialValues,
     bookId: initialValues?.book?.id ?? initialValues?.bookId ?? '',
     courseId: initialValues?.course?.id ?? initialValues?.courseId ?? '',
+    courseName: initialValues?.course?.course_name ?? initialValues?.course?.name ?? initialValues?.courseName ?? '',
     used_price: initialValues?.used_price ?? initialValues?.price ?? '',
     has_writing: String(initialValues?.has_writing ?? defaultValues.has_writing),
   }))
@@ -181,12 +183,27 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
     })
   }
 
+  const ensureCourse = async () => {
+    const courseName = form.courseName.trim()
+    if (!courseName) return null
+
+    const existingCourse = courses.find((course) => (
+      course.course_name.trim().toLowerCase() === courseName.toLowerCase()
+      || course.name.trim().toLowerCase() === courseName.toLowerCase()
+    ))
+    if (existingCourse) return existingCourse
+
+    return createCourse({ course_name: courseName, name: courseName })
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     const savedBook = await ensureBook()
+    const savedCourse = await ensureCourse()
     const payload = {
       ...form,
       bookId: savedBook.id,
+      courseId: savedCourse?.id ?? '',
       book: savedBook,
       used_price: Number(form.used_price),
       has_writing: form.has_writing === 'true',
@@ -290,12 +307,18 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
         <div className="form-grid two-columns">
           <label>
             연결 수업
-            <select name="courseId" value={form.courseId} onChange={handleChange}>
-              <option value="">선택 안 함</option>
+            <input
+              name="courseName"
+              value={form.courseName}
+              onChange={handleChange}
+              placeholder="예: 데이터베이스"
+              list="course-suggestions"
+            />
+            <datalist id="course-suggestions">
               {courses.map((course) => (
-                <option key={course.id} value={course.id}>{course.course_name}</option>
+                <option key={course.id} value={course.course_name} />
               ))}
-            </select>
+            </datalist>
           </label>
           <label>
             판매자 이름
