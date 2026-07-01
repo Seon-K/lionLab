@@ -97,10 +97,14 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const localSuggestions = useMemo(() => {
     if (!normalizedSearchQuery) return []
 
+    const compactQuery = normalizedSearchQuery.replaceAll(' ', '')
     return books
       .filter((book) => [book.title, book.author, book.authors, book.publisher, book.isbn]
         .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(normalizedSearchQuery)))
+        .some((value) => {
+          const text = String(value).toLowerCase()
+          return text.includes(normalizedSearchQuery) || text.replaceAll(' ', '').includes(compactQuery)
+        }))
       .slice(0, 6)
   }, [books, normalizedSearchQuery])
   const visibleSuggestions = useMemo(
@@ -149,6 +153,14 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const handleChange = (event) => {
     const { name, value } = event.target
     setForm((current) => ({ ...current, [name]: value }))
+  }
+
+  const handleSearchQueryChange = (event) => {
+    const value = event.target.value
+    setSearchQuery(value)
+    setIsSuggestionOpen(Boolean(value.trim()))
+    setSearchResults([])
+    setSearchMessage('')
   }
 
   const handleBookDraftChange = (event) => {
@@ -277,10 +289,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
           <div className="inline-search">
             <input
               value={searchQuery}
-              onChange={(event) => {
-                setSearchQuery(event.target.value)
-                setIsSuggestionOpen(Boolean(event.target.value.trim()))
-              }}
+              onChange={handleSearchQueryChange}
               onFocus={() => { if (searchQuery.trim()) setIsSuggestionOpen(true) }}
               onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(event) }}
               placeholder="ISBN 또는 책 제목으로 검색"
@@ -290,7 +299,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
           </div>
           {normalizedSearchQuery && isSuggestionOpen && (visibleSuggestions.length > 0 || searchMessage || isSearching) && (
             <div className="book-suggestion-box" aria-label="교재 검색 추천어">
-              {isSearching && <p className="form-help-text">비슷한 교재를 찾는 중입니다.</p>}
+              {isSearching && visibleSuggestions.length === 0 && <p className="form-help-text">비슷한 교재를 찾는 중입니다.</p>}
               {searchMessage && !isSearching && <p className="form-help-text">{searchMessage}</p>}
               {visibleSuggestions.length > 0 && (
                 <div className="book-suggestion-list">
