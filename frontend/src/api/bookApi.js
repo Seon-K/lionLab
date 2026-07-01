@@ -33,5 +33,6 @@ export async function deleteBook(id) {
 }
 
 export async function searchBookByIsbn(query) {
-  return get(`/isbn/?query=${encodeURIComponent(query)}`)
+  const book = await get(`/isbn/?query=${encodeURIComponent(query)}`)
+  return normalizeBook(book)
 }

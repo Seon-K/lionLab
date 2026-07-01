@@ -16,6 +16,11 @@ const STATUS_VALUES = {
   done: 'done',
 }
 
+function normalizeAuthors(authors) {
+  if (Array.isArray(authors)) return authors.join(', ')
+  return authors ?? ''
+}
+
 export function toStatusLabel(status) {
   return STATUS_LABELS[status] ?? status ?? '판매중'
 }
@@ -27,13 +32,17 @@ export function toStatusValue(status) {
 export function normalizeBook(book) {
   if (!book) return null
 
+  const authors = normalizeAuthors(book.authors ?? book.author)
+  const originalPrice = book.original_price ?? book.price ?? book.sale_price ?? 0
+
   return {
     ...book,
-    author: book.author ?? book.authors ?? '',
-    authors: book.authors ?? book.author ?? '',
+    author: book.author ?? authors,
+    authors,
     cover_image: book.cover_image ?? book.thumbnail ?? '',
     thumbnail: book.thumbnail ?? book.cover_image ?? '',
-    sale_price: book.sale_price ?? book.original_price ?? 0,
+    original_price: originalPrice,
+    sale_price: book.sale_price ?? originalPrice,
   }
 }
 
@@ -88,11 +97,11 @@ export function normalizeListing(listing, books = [], courses = []) {
 export function toBookPayload(book) {
   return {
     title: book.title,
-    authors: book.authors ?? book.author ?? '',
-    publisher: book.publisher,
+    authors: normalizeAuthors(book.authors ?? book.author),
+    publisher: book.publisher ?? '',
     thumbnail: book.thumbnail ?? book.cover_image ?? '',
     isbn: book.isbn ?? '',
-    original_price: Number(book.original_price ?? book.sale_price ?? 0),
+    original_price: Number(book.original_price ?? book.price ?? book.sale_price ?? 0),
   }
 }
 
@@ -118,4 +127,3 @@ export function toCoursePayload(course) {
     professor: course.professor ?? course.professor_name ?? '',
   }
 }
-
