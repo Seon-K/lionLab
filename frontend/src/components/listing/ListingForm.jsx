@@ -228,6 +228,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
       <section className="form-section book-register-section">
         <h2>교재 정보</h2>
         <div className="book-search-field">
+          <p className="search-guide-text">ISBN 또는 책 제목으로 검색한 뒤 교재를 선택하면 아래 교재 정보가 자동으로 채워집니다.</p>
           <div className="inline-search">
             <input
               value={searchQuery}
@@ -236,10 +237,17 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
               placeholder="ISBN 또는 책 제목으로 검색"
               aria-label="ISBN 또는 책 제목 검색"
             />
-            <Button type="button" disabled={isSearching} onClick={handleSearch}>{isSearching ? '검색 중' : '검색'}</Button>
+            <Button type="button" disabled={isSearching} onClick={handleSearch}>검색</Button>
           </div>
           {searchMessage && <p className="form-help-text">{searchMessage}</p>}
-          {visibleSearchResults.length > 0 && (
+          {isSearching && (
+            <div className="book-search-loading" role="status">
+              <span className="loading-dot" />
+              <strong>교재를 검색하는 중입니다.</strong>
+              <small>검색 결과가 아래에 표시됩니다.</small>
+            </div>
+          )}
+          {!isSearching && visibleSearchResults.length > 0 && (
             <div className="book-recommend-box">
               <div className="recommend-head">
                 <strong>검색된 교재</strong>
