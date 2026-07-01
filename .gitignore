@@ -18,3 +18,4 @@ frontend/.vite/
 
 # VS Code
 .vscode/
+backend/.venv/
