@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getListing, getListings } from '../api/listingApi'
 import BookCard from '../components/book/BookCard'
@@ -15,6 +15,11 @@ function ListingDetailPage() {
     getListing(id).then(setListing)
     getListings().then(setRelated)
   }, [id])
+
+  const relatedListings = useMemo(
+    () => related.filter((item) => item.id !== Number(id)).slice(0, 4),
+    [id, related],
+  )
 
   if (!listing) return <Loading />
 
@@ -86,7 +91,7 @@ function ListingDetailPage() {
           <h2>이 강의의 다른 참고 교재</h2>
         </div>
         <div className="book-grid related-grid">
-          {related.slice(0, 4).map((item) => (
+          {relatedListings.map((item) => (
             <BookCard key={item.id} book={item.book} listing={item} />
           ))}
         </div>

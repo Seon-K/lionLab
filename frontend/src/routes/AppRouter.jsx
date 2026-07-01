@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+﻿import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from '../components/common/Layout'
 import BookSearchPage from '../pages/BookSearchPage'
 import CoursePage from '../pages/CoursePage'
@@ -14,7 +14,8 @@ function AppRouter() {
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/books/search" element={<BookSearchPage />} />
+          <Route path="/books" element={<BookSearchPage />} />
+          <Route path="/books/search" element={<Navigate to="/books" replace />} />
           <Route path="/listings" element={<ListingListPage />} />
           <Route path="/listings/new" element={<ListingCreatePage />} />
           <Route path="/listings/:id" element={<ListingDetailPage />} />
