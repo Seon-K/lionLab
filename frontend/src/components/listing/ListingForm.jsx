@@ -92,60 +92,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
     return { ...bookDraft, cover_image: coverPreview || bookDraft.cover_image }
   }, [bookDraft, coverPreview, selectedBook])
 
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
-  const localSuggestions = useMemo(() => {
-    if (!normalizedSearchQuery) return []
-
-    const compactQuery = normalizedSearchQuery.replaceAll(' ', '')
-    return books
-      .filter((book) => [book.title, book.author, book.authors, book.publisher, book.isbn]
-        .filter(Boolean)
-        .some((value) => {
-          const text = String(value).toLowerCase()
-          return text.includes(normalizedSearchQuery) || text.replaceAll(' ', '').includes(compactQuery)
-        }))
-      .slice(0, 6)
-  }, [books, normalizedSearchQuery])
-  const visibleSuggestions = useMemo(
-    () => (normalizedSearchQuery ? mergeBookResults(searchResults, localSuggestions).slice(0, 8) : []),
-    [localSuggestions, normalizedSearchQuery, searchResults],
-  )
-
-  useEffect(() => {
-    const query = searchQuery.trim()
-    if (!query) return undefined
-
-    const timerId = window.setTimeout(async () => {
-      setIsSearching(true)
-      try {
-        let isbnResults = []
-        let savedResults = []
-
-        if (query.length >= 5) {
-          try {
-            const isbnBook = await searchBookByIsbn(query)
-            if (isbnBook?.title) isbnResults = [isbnBook]
-          } catch {
-            isbnResults = []
-          }
-        }
-
-        try {
-          savedResults = await searchBooks(query)
-        } catch {
-          savedResults = []
-        }
-
-        const results = mergeBookResults(isbnResults, savedResults).slice(0, 8)
-        setSearchResults(results)
-        setSearchMessage(results.length || localSuggestions.length ? '' : '검색 결과가 없습니다. 직접 입력해 주세요.')
-      } finally {
-        setIsSearching(false)
-      }
-    }, 350)
-
-    return () => window.clearTimeout(timerId)
-  }, [localSuggestions.length, searchQuery])
+  const visibleSearchResults = searchResults
   const originalDiscount = calculateDiscount(previewBook?.original_price, form.used_price)
   const saleDiscount = calculateDiscount(previewBook?.sale_price, form.used_price)
 
@@ -155,10 +102,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   }
 
   const handleSearchQueryChange = (event) => {
-    const value = event.target.value
-    setSearchQuery(value)
-    setSearchResults([])
-    setSearchMessage('')
+    setSearchQuery(event.target.value)
   }
 
   const handleBookDraftChange = (event) => {
@@ -294,24 +238,26 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
             />
             <Button type="button" disabled={isSearching} onClick={handleSearch}>{isSearching ? '검색 중' : '검색'}</Button>
           </div>
-          {normalizedSearchQuery && (visibleSuggestions.length > 0 || searchMessage || isSearching) && (
-            <div className="book-suggestion-box" aria-label="교재 검색 추천어">
-              {isSearching && visibleSuggestions.length === 0 && <p className="form-help-text">비슷한 교재를 찾는 중입니다.</p>}
-              {searchMessage && !isSearching && <p className="form-help-text">{searchMessage}</p>}
-              {visibleSuggestions.length > 0 && (
-                <div className="book-suggestion-list">
-                  {visibleSuggestions.map((book) => (
-                    <button key={`${book.isbn || book.id}-${book.title}`} type="button" className="book-suggestion-item" onClick={() => handleSelectBook(book)}>
-                      <img src={book.cover_image || coverPlaceholder} alt={`${book.title} 표지`} />
-                      <span>
-                        <strong>{book.title}</strong>
-                        <small>{book.author || book.authors || '저자 정보 없음'} · {book.publisher || '출판사 정보 없음'}</small>
-                        <em>{book.isbn || 'ISBN 정보 없음'}</em>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          {searchMessage && <p className="form-help-text">{searchMessage}</p>}
+          {visibleSearchResults.length > 0 && (
+            <div className="book-recommend-box">
+              <div className="recommend-head">
+                <strong>검색된 교재</strong>
+                <span>교재를 선택하면 아래 정보가 채워집니다.</span>
+              </div>
+              <div className="book-result-list" aria-label="교재 검색 결과 목록">
+                {visibleSearchResults.map((book) => (
+                  <button key={`${book.isbn || book.id}-${book.title}`} type="button" className="book-result-item" onClick={() => handleSelectBook(book)}>
+                    <img src={book.cover_image || coverPlaceholder} alt={`${book.title} 표지`} />
+                    <span>
+                      <strong>{book.title}</strong>
+                      <small>{book.author || book.authors || '저자 정보 없음'}</small>
+                      <small>{book.publisher || '출판사 정보 없음'}</small>
+                      <em>{book.isbn || 'ISBN 정보 없음'}</em>
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
