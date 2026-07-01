@@ -55,6 +55,7 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchMessage, setSearchMessage] = useState('')
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false)
   const [selectedBook, setSelectedBook] = useState(() => initialValues?.book ?? null)
   const [bookDraft, setBookDraft] = useState(() => ({ ...emptyBookDraft, ...(initialValues?.book ?? {}) }))
   const [coverPreview, setCoverPreview] = useState(initialValues?.book?.cover_image ?? '')
@@ -92,6 +93,56 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
     return { ...bookDraft, cover_image: coverPreview || bookDraft.cover_image }
   }, [bookDraft, coverPreview, selectedBook])
 
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+  const localSuggestions = useMemo(() => {
+    if (!normalizedSearchQuery) return []
+
+    return books
+      .filter((book) => [book.title, book.author, book.authors, book.publisher, book.isbn]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedSearchQuery)))
+      .slice(0, 6)
+  }, [books, normalizedSearchQuery])
+  const visibleSuggestions = useMemo(
+    () => (normalizedSearchQuery ? mergeBookResults(searchResults, localSuggestions).slice(0, 8) : []),
+    [localSuggestions, normalizedSearchQuery, searchResults],
+  )
+
+  useEffect(() => {
+    const query = searchQuery.trim()
+    if (!query) return undefined
+
+    const timerId = window.setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        let isbnResults = []
+        let savedResults = []
+
+        if (query.length >= 5) {
+          try {
+            const isbnBook = await searchBookByIsbn(query)
+            if (isbnBook?.title) isbnResults = [isbnBook]
+          } catch {
+            isbnResults = []
+          }
+        }
+
+        try {
+          savedResults = await searchBooks(query)
+        } catch {
+          savedResults = []
+        }
+
+        const results = mergeBookResults(isbnResults, savedResults).slice(0, 8)
+        setSearchResults(results)
+        setSearchMessage(results.length || localSuggestions.length ? '' : '검색 결과가 없습니다. 직접 입력해 주세요.')
+      } finally {
+        setIsSearching(false)
+      }
+    }, 350)
+
+    return () => window.clearTimeout(timerId)
+  }, [localSuggestions.length, searchQuery])
   const originalDiscount = calculateDiscount(previewBook?.original_price, form.used_price)
   const saleDiscount = calculateDiscount(previewBook?.sale_price, form.used_price)
 
@@ -222,39 +273,42 @@ function ListingForm({ mode = 'create', initialValues, onSubmit }) {
     <form className="listing-form enhanced-form" onSubmit={handleSubmit}>
       <section className="form-section book-register-section">
         <h2>교재 정보</h2>
-        <div className="inline-search">
-          <input
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(event) }}
-            placeholder="ISBN 또는 책 제목으로 검색"
-            aria-label="ISBN 또는 책 제목 검색"
-          />
-          <Button type="button" disabled={isSearching} onClick={handleSearch}>{isSearching ? '검색 중' : '검색'}</Button>
-        </div>
-        {searchMessage && <p className="form-help-text">{searchMessage}</p>}
-        {searchResults.length > 0 && (
-          <div className="book-recommend-box">
-            <div className="recommend-head">
-              <strong>비슷한 교재 추천</strong>
-              <span>가로로 넘겨서 확인하세요.</span>
-            </div>
-            <div className="book-result-list" aria-label="비슷한 교재 추천 목록">
-              {searchResults.map((book) => (
-                <button key={`${book.isbn || book.id}-${book.title}`} type="button" className="book-result-item" onClick={() => handleSelectBook(book)}>
-                  <img src={book.cover_image || coverPlaceholder} alt={`${book.title} 표지`} />
-                  <span>
-                    <strong>{book.title}</strong>
-                    <small>{book.author || book.authors || '저자 정보 없음'}</small>
-                    <small>{book.publisher || '출판사 정보 없음'}</small>
-                    <em>{book.isbn || 'ISBN 정보 없음'}</em>
-                  </span>
-                </button>
-              ))}
-            </div>
+        <div className="book-search-field">
+          <div className="inline-search">
+            <input
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value)
+                setIsSuggestionOpen(Boolean(event.target.value.trim()))
+              }}
+              onFocus={() => { if (searchQuery.trim()) setIsSuggestionOpen(true) }}
+              onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(event) }}
+              placeholder="ISBN 또는 책 제목으로 검색"
+              aria-label="ISBN 또는 책 제목 검색"
+            />
+            <Button type="button" disabled={isSearching} onClick={handleSearch}>{isSearching ? '검색 중' : '검색'}</Button>
           </div>
-        )}
-
+          {normalizedSearchQuery && isSuggestionOpen && (visibleSuggestions.length > 0 || searchMessage || isSearching) && (
+            <div className="book-suggestion-box" aria-label="교재 검색 추천어">
+              {isSearching && <p className="form-help-text">비슷한 교재를 찾는 중입니다.</p>}
+              {searchMessage && !isSearching && <p className="form-help-text">{searchMessage}</p>}
+              {visibleSuggestions.length > 0 && (
+                <div className="book-suggestion-list">
+                  {visibleSuggestions.map((book) => (
+                    <button key={`${book.isbn || book.id}-${book.title}`} type="button" className="book-suggestion-item" onClick={() => handleSelectBook(book)}>
+                      <img src={book.cover_image || coverPlaceholder} alt={`${book.title} 표지`} />
+                      <span>
+                        <strong>{book.title}</strong>
+                        <small>{book.author || book.authors || '저자 정보 없음'} · {book.publisher || '출판사 정보 없음'}</small>
+                        <em>{book.isbn || 'ISBN 정보 없음'}</em>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <div className="form-grid two-columns">
           <label>
             책 제목

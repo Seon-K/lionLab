@@ -1063,97 +1063,79 @@ dd {
   font-weight: 700;
 }
 
-.book-recommend-box {
+.book-search-field {
+  position: relative;
+  z-index: 3;
+}
+
+.book-suggestion-box {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
   display: grid;
-  gap: 10px;
-  overflow: hidden;
+  gap: 6px;
+  max-height: 340px;
+  overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 14px;
-  background: #fbfcff;
+  padding: 8px;
+  background: white;
+  box-shadow: 0 18px 42px rgba(35, 53, 84, 0.14);
 }
 
-.recommend-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.recommend-head strong {
-  color: var(--ink);
-  font-size: 14px;
-}
-
-.recommend-head span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.book-result-list {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding: 2px 2px 10px;
-  scroll-snap-type: x proximity;
-}
-
-.book-result-list::-webkit-scrollbar {
-  height: 8px;
-}
-
-.book-result-list::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: #c8d4ea;
-}
-
-.book-result-item {
+.book-suggestion-list {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 12px;
+  gap: 6px;
+}
+
+.book-suggestion-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
-  flex: 0 0 290px;
-  min-height: 104px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px;
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px;
   background: white;
   color: inherit;
   text-align: left;
   cursor: pointer;
-  scroll-snap-align: start;
 }
 
-.book-result-item:hover {
-  border-color: rgba(47, 111, 237, 0.45);
+.book-suggestion-item:hover {
   background: #f3f7ff;
 }
 
-.book-result-item img {
-  width: 64px;
-  height: 86px;
-  border-radius: 6px;
+.book-suggestion-item img {
+  width: 42px;
+  height: 56px;
+  border-radius: 5px;
   object-fit: cover;
   background: #eef2f8;
 }
 
-.book-result-item span {
+.book-suggestion-item span {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
-.book-result-item strong,
-.book-result-item small,
-.book-result-item em {
+.book-suggestion-item strong,
+.book-suggestion-item small,
+.book-suggestion-item em {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.book-result-item small,
-.book-result-item em {
+.book-suggestion-item strong {
+  font-size: 13px;
+}
+
+.book-suggestion-item small,
+.book-suggestion-item em {
   color: var(--muted);
   font-size: 12px;
   font-style: normal;
