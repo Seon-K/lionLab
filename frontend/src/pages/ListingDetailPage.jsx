@@ -94,7 +94,7 @@ function ListingDetailPage() {
               <span>{listing.seller_name.slice(0, 1)}</span>
               <div>
                 <strong>{listing.seller_name}</strong>
-                <p>응답 빠름 · 캠퍼스 인증</p>
+                <p>{listing.status} · {formatDate(listing.created_at)} 등록</p>
               </div>
             </div>
             <dl>

@@ -637,20 +637,10 @@ dd {
   font-size: 13px;
 }
 
-.wide-button,
-.bookmark-button {
+.wide-button {
   width: 100%;
 }
 
-.bookmark-button {
-  margin-top: 8px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 12px;
-  background: white;
-  color: var(--blue);
-  font-weight: 800;
-}
 
 .seller-profile {
   display: flex;
@@ -1042,13 +1032,6 @@ dd {
   margin-top: 18px;
 }
 
-.action-feedback {
-  margin-top: 10px !important;
-  border-radius: 7px;
-  padding: 10px;
-  background: #eef6ff;
-  color: var(--blue) !important;
-}
 
 .book-search-field {
   display: grid;
