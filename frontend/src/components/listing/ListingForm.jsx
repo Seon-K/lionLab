@@ -10,6 +10,7 @@ import { createCourse, getCourses } from "../../api/courseApi";
 import { createListing, updateListing } from "../../api/listingApi";
 import { calculateDiscount, formatPrice } from "../../utils/format";
 import { saveListingOwner } from "../../utils/listingOwnership";
+import { readListingPhotos, saveListingPhotos } from "../../utils/listingPhotos";
 import Button from "../common/Button";
 import Loading from "../common/Loading";
 
@@ -26,6 +27,8 @@ const defaultValues = {
   status: "판매중",
   description: "",
 };
+
+const MAX_CONDITION_PHOTOS = 3;
 
 const coverPlaceholder =
   "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22160%22 viewBox=%220 0 120 160%22><rect width=%22120%22 height=%22160%22 rx=%228%22 fill=%22%23eef2f8%22/><path d=%22M34 44h52v72H34z%22 fill=%22%23d7deeb%22/><path d=%22M43 58h34M43 72h28M43 86h30%22 stroke=%22%23818da3%22 stroke-width=%224%22 stroke-linecap=%22round%22/></svg>";
@@ -44,6 +47,15 @@ const emptyBookDraft = {
 
 function getBookKey(book) {
   return book?.isbn || book?.id || book?.title;
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function mergeBookResults(...groups) {
@@ -78,6 +90,12 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [conditionPhotos, setConditionPhotos] = useState(() =>
+    (initialValues?.id ? readListingPhotos(initialValues.id) : []).map((photo) => ({
+      ...photo,
+      preview: photo.src,
+    })),
+  );
   const [form, setForm] = useState(() => ({
     ...defaultValues,
     ...initialValues,
@@ -124,6 +142,7 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
     return { ...bookDraft, cover_image: coverPreview || bookDraft.cover_image };
   }, [bookDraft, coverPreview, selectedBook]);
 
+
   const visibleSearchResults = searchResults;
   const originalDiscount = calculateDiscount(
     previewBook?.original_price,
@@ -154,6 +173,31 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
     if (name === "cover_image") setCoverPreview(value);
     setSelectedBook(null);
     setForm((current) => ({ ...current, bookId: "" }));
+  };
+
+  const handleConditionPhotoUpload = (event) => {
+    const files = Array.from(event.target.files || []).slice(0, MAX_CONDITION_PHOTOS);
+    if (files.length === 0) return;
+
+    setConditionPhotos((current) => {
+      const availableCount = MAX_CONDITION_PHOTOS - current.length;
+      const nextPhotos = files.slice(0, availableCount).map((file) => ({
+        id: `${file.name}-${file.lastModified}-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+        file,
+        name: file.name,
+        preview: URL.createObjectURL(file),
+      }));
+      return [...current, ...nextPhotos];
+    });
+    event.target.value = "";
+  };
+
+  const handleRemoveConditionPhoto = (photoId) => {
+    setConditionPhotos((current) => {
+      const target = current.find((photo) => photo.id === photoId);
+      if (target?.preview?.startsWith("blob:")) URL.revokeObjectURL(target.preview);
+      return current.filter((photo) => photo.id !== photoId);
+    });
   };
 
   const handleCoverUpload = (event) => {
@@ -274,6 +318,16 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
       : mode === "edit" && initialValues?.id
         ? await updateListing(initialValues.id, payload)
         : await createListing(payload);
+    if (saved?.id) {
+      const savedPhotos = await Promise.all(
+        conditionPhotos.map(async (photo, index) => ({
+          id: photo.id || `${saved.id}-${index}`,
+          name: photo.name || `책 상태 사진 ${index + 1}`,
+          src: photo.file ? await fileToDataUrl(photo.file) : photo.src || photo.preview,
+        })),
+      );
+      saveListingPhotos(saved.id, savedPhotos);
+    }
     if (saved?.id && form.seller_name && form.delete_password) {
       saveListingOwner(saved.id, form.seller_name, form.delete_password);
     }
@@ -418,9 +472,9 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
             />
           </label>
           <label className="wide-field file-upload-field">
-            책 사진 업로드
+            표지 이미지 업로드
             <input type="file" accept="image/*" onChange={handleCoverUpload} />
-            <span>선택한 이미지는 미리보기에 반영됩니다.</span>
+            <span>선택한 이미지는 교재 표지 미리보기에만 반영됩니다.</span>
           </label>
         </div>
 
@@ -543,6 +597,32 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
               placeholder="책 상태, 필기 정도, 거래 가능 시간 등을 입력하세요."
             />
           </label>
+          <div className="wide-field condition-photo-field">
+            <div>
+              <strong>책 상태 사진</strong>
+              <span>최대 3장까지 등록할 수 있고, 등록 버튼을 누른 뒤 저장됩니다.</span>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleConditionPhotoUpload}
+              disabled={conditionPhotos.length >= MAX_CONDITION_PHOTOS}
+            />
+            {conditionPhotos.length > 0 && (
+              <div className="photo-preview-grid">
+                {conditionPhotos.map((photo, index) => (
+                  <figure key={photo.id}>
+                    <img src={photo.preview || photo.src} alt={`책 상태 사진 ${index + 1}`} />
+                    <figcaption>{index + 1}번째 사진</figcaption>
+                    <button type="button" onClick={() => handleRemoveConditionPhoto(photo.id)}>
+                      삭제
+                    </button>
+                  </figure>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -581,4 +661,5 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
 }
 
 export default ListingForm;
+
 

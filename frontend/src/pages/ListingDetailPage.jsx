@@ -7,6 +7,7 @@ import Loading from '../components/common/Loading'
 import PriceCompareBox from '../components/listing/PriceCompareBox'
 import { formatDate, formatPrice } from '../utils/format'
 import { removeListingOwner, verifyListingOwner } from '../utils/listingOwnership'
+import { getListingPhotos, removeListingPhotos } from '../utils/listingPhotos'
 
 function ListingDetailPage() {
   const { id } = useParams()
@@ -14,9 +15,13 @@ function ListingDetailPage() {
   const [listing, setListing] = useState(null)
   const [related, setRelated] = useState([])
   const [isDeleting, setIsDeleting] = useState(false)
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
 
   useEffect(() => {
-    getListing(id).then(setListing)
+    getListing(id).then((data) => {
+      setListing(data)
+      setActivePhotoIndex(0)
+    })
     getListings().then(setRelated)
   }, [id])
 
@@ -24,6 +29,30 @@ function ListingDetailPage() {
     () => related.filter((item) => item.id !== Number(id)).slice(0, 4),
     [id, related],
   )
+
+  const conditionPhotos = useMemo(() => {
+    const photos = getListingPhotos(listing)
+    if (photos.length > 0) return photos
+    if (!listing?.book?.cover_image) return []
+
+    return [
+      {
+        id: 'book-cover',
+        name: '교재 표지',
+        src: listing.book.cover_image,
+      },
+    ]
+  }, [listing])
+
+  const activePhoto = conditionPhotos[activePhotoIndex] || conditionPhotos[0]
+  const hasMultiplePhotos = conditionPhotos.length > 1
+
+  const movePhoto = (direction) => {
+    setActivePhotoIndex((current) => {
+      if (conditionPhotos.length === 0) return 0
+      return (current + direction + conditionPhotos.length) % conditionPhotos.length
+    })
+  }
 
   const handleDelete = async () => {
     const sellerName = window.prompt('판매자 이름을 입력하세요.')
@@ -44,6 +73,7 @@ function ListingDetailPage() {
     try {
       await deleteListing(id)
       removeListingOwner(id)
+      removeListingPhotos(id)
       navigate('/listings')
     } finally {
       setIsDeleting(false)
@@ -62,8 +92,50 @@ function ListingDetailPage() {
           </p>
 
           <div className="detail-book-area">
-            <div className="detail-cover">
-              <img src={listing.book.cover_image} alt={`${listing.book.title} 표지`} />
+            <div className="detail-photo-viewer">
+              <div className="detail-cover">
+                {activePhoto && <img src={activePhoto.src} alt={activePhoto.name} />}
+                {hasMultiplePhotos && (
+                  <>
+                    <button
+                      type="button"
+                      className="photo-nav photo-nav-prev"
+                      aria-label="이전 책 상태 사진"
+                      onClick={() => movePhoto(-1)}
+                    >
+                      &lt;
+                    </button>
+                    <button
+                      type="button"
+                      className="photo-nav photo-nav-next"
+                      aria-label="다음 책 상태 사진"
+                      onClick={() => movePhoto(1)}
+                    >
+                      &gt;
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="photo-counter">
+                <strong>{activePhoto?.name || '책 상태 사진'}</strong>
+                <span>
+                  {conditionPhotos.length > 0 ? activePhotoIndex + 1 : 0} / {conditionPhotos.length}
+                </span>
+              </div>
+              {hasMultiplePhotos && (
+                <div className="photo-thumb-list" aria-label="책 상태 사진 목록">
+                  {conditionPhotos.map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      className={index === activePhotoIndex ? 'active' : ''}
+                      onClick={() => setActivePhotoIndex(index)}
+                    >
+                      <img src={photo.src} alt={`${photo.name} 미리보기`} />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <section className="description-card">
               <h2>상세 설명</h2>
