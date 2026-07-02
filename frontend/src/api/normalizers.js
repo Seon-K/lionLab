@@ -87,7 +87,7 @@ export function normalizeListing(listing, books = [], courses = []) {
     has_writing: listing.has_writing ?? conditionText.includes('필기'),
     trade_place: noteText || '거래 장소 협의',
     note: listing.note ?? noteText,
-    seller_name: listing.seller_name ?? '판매자',
+    seller_name: listing.seller_name ?? listing.sellerName ?? '판매자 미입력',
     description: listing.description ?? (conditionText || noteText || '상세 설명이 없습니다.'),
     discount_from_original: listing.discount_from_original ?? listing.discount_rate ?? 0,
     discount_from_sale: listing.discount_from_sale ?? listing.discount_rate ?? 0,
@@ -127,3 +127,4 @@ export function toCoursePayload(course) {
     professor: course.professor ?? course.professor_name ?? '',
   }
 }
+

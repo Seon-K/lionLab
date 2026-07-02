@@ -35,4 +35,8 @@ export function removeListingOwner(listingId) {
   delete owners[String(listingId)]
   writeOwners(owners)
 }
+export function getListingOwnerName(listingId) {
+  const owner = readOwners()[String(listingId)]
+  return owner?.sellerName ?? ''
+}
 
