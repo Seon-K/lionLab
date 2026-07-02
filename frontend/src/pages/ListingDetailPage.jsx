@@ -1,15 +1,18 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { getListing, getListings } from '../api/listingApi'
+import { useNavigate, useParams } from 'react-router-dom'
+import { deleteListing, getListing, getListings } from '../api/listingApi'
 import BookCard from '../components/book/BookCard'
+import Button from '../components/common/Button'
 import Loading from '../components/common/Loading'
 import PriceCompareBox from '../components/listing/PriceCompareBox'
 import { formatDate, formatPrice } from '../utils/format'
 
 function ListingDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [listing, setListing] = useState(null)
   const [related, setRelated] = useState([])
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     getListing(id).then(setListing)
@@ -21,6 +24,18 @@ function ListingDetailPage() {
     [id, related],
   )
 
+  const handleDelete = async () => {
+    const ok = window.confirm('이 판매글을 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.')
+    if (!ok) return
+
+    setIsDeleting(true)
+    try {
+      await deleteListing(id)
+      navigate('/listings')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
   if (!listing) return <Loading />
 
   return (
@@ -79,6 +94,12 @@ function ListingDetailPage() {
                 <dd>{formatPrice(listing.book.original_price)}</dd>
               </div>
             </dl>
+            <div className="seller-actions">
+              <p>내가 등록한 판매글이라면 이곳에서 삭제할 수 있습니다.</p>
+              <Button type="button" variant="danger" className="wide-button" disabled={isDeleting} onClick={handleDelete}>
+                {isDeleting ? '삭제 중' : '판매글 삭제'}
+              </Button>
+            </div>
           </section>
           <section className="map-card" aria-label="거래 위치">
             <span>거래 위치 지도</span>
@@ -101,3 +122,4 @@ function ListingDetailPage() {
 }
 
 export default ListingDetailPage
+
