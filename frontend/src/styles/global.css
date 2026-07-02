@@ -1733,3 +1733,113 @@ dd {
     margin: 0 18px 18px;
   }
 }
+
+/* Locked textbook card layout: identical card shape across home, listings, search, and related grids. */
+.book-grid,
+.search-grid,
+.related-grid,
+.listing-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  gap: 28px !important;
+  align-items: stretch !important;
+}
+
+.book-card,
+a.book-card,
+article.book-card {
+  display: grid !important;
+  grid-template-rows: 300px 1fr auto !important;
+  min-height: 600px !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+.book-card .book-thumb {
+  width: 100% !important;
+  height: 300px !important;
+  aspect-ratio: auto !important;
+  overflow: hidden !important;
+}
+
+.book-card .book-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.book-card .book-card-body {
+  display: grid !important;
+  grid-template-rows: auto auto auto 1fr !important;
+  gap: 12px !important;
+  min-height: 0 !important;
+  padding: 24px 24px 14px !important;
+}
+
+.book-card .book-card-body strong {
+  display: -webkit-box !important;
+  min-height: 54px !important;
+  overflow: hidden !important;
+  color: #111827 !important;
+  font-size: 20px !important;
+  line-height: 1.35 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+.book-card .book-card-body p,
+.book-card .book-card-body small {
+  display: -webkit-box !important;
+  min-height: 23px !important;
+  overflow: hidden !important;
+  color: #6b7280 !important;
+  font-size: 16px !important;
+  line-height: 1.45 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 1 !important;
+}
+
+.book-card .book-card-body p {
+  margin-top: 0 !important;
+}
+
+.book-card .card-price {
+  align-self: end !important;
+  margin-top: auto !important;
+}
+
+.book-card .card-link-text {
+  align-self: end !important;
+  margin: 0 24px 24px !important;
+  padding: 15px 16px !important;
+}
+
+@media (max-width: 1024px) {
+  .book-grid,
+  .search-grid,
+  .related-grid,
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .book-grid,
+  .search-grid,
+  .related-grid,
+  .listing-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .book-card,
+  a.book-card,
+  article.book-card {
+    grid-template-rows: 260px 1fr auto !important;
+    min-height: 548px !important;
+  }
+
+  .book-card .book-thumb {
+    height: 260px !important;
+  }
+}
