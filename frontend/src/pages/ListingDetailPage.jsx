@@ -6,6 +6,7 @@ import Button from '../components/common/Button'
 import Loading from '../components/common/Loading'
 import PriceCompareBox from '../components/listing/PriceCompareBox'
 import { formatDate, formatPrice } from '../utils/format'
+import { removeListingOwner, verifyListingOwner } from '../utils/listingOwnership'
 
 function ListingDetailPage() {
   const { id } = useParams()
@@ -25,12 +26,24 @@ function ListingDetailPage() {
   )
 
   const handleDelete = async () => {
+    const sellerName = window.prompt('판매자 이름을 입력하세요.')
+    if (!sellerName) return
+
+    const password = window.prompt('등록할 때 입력한 삭제 비밀번호를 입력하세요.')
+    if (!password) return
+
+    if (!verifyListingOwner(id, sellerName, password)) {
+      window.alert('판매자 이름 또는 삭제 비밀번호가 일치하지 않습니다.')
+      return
+    }
+
     const ok = window.confirm('이 판매글을 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.')
     if (!ok) return
 
     setIsDeleting(true)
     try {
       await deleteListing(id)
+      removeListingOwner(id)
       navigate('/listings')
     } finally {
       setIsDeleting(false)
@@ -95,7 +108,7 @@ function ListingDetailPage() {
               </div>
             </dl>
             <div className="seller-actions">
-              <p>내가 등록한 판매글이라면 이곳에서 삭제할 수 있습니다.</p>
+              <p>등록할 때 입력한 판매자 이름과 삭제 비밀번호가 일치해야 삭제할 수 있습니다.</p>
               <Button type="button" variant="danger" className="wide-button" disabled={isDeleting} onClick={handleDelete}>
                 {isDeleting ? '삭제 중' : '판매글 삭제'}
               </Button>
