@@ -6,7 +6,7 @@ import Button from '../components/common/Button'
 import Loading from '../components/common/Loading'
 import PriceCompareBox from '../components/listing/PriceCompareBox'
 import { formatDate, formatPrice } from '../utils/format'
-import { removeListingOwner, verifyListingOwner } from '../utils/listingOwnership'
+import { hasListingOwner, removeListingOwner, verifyListingOwner } from '../utils/listingOwnership'
 import { getListingPhotos, removeListingPhotos } from '../utils/listingPhotos'
 
 function ListingDetailPage() {
@@ -60,6 +60,11 @@ function ListingDetailPage() {
 
     const password = window.prompt('등록할 때 입력한 삭제 비밀번호를 입력하세요.')
     if (!password) return
+
+    if (!hasListingOwner(id)) {
+      window.alert('이 브라우저에 해당 판매글의 삭제 인증 정보가 없습니다. 백엔드에 판매자 인증 필드가 추가되기 전까지는 등록한 브라우저에서만 삭제할 수 있습니다.')
+      return
+    }
 
     if (!verifyListingOwner(id, sellerName, password)) {
       window.alert('판매자 이름 또는 삭제 비밀번호가 일치하지 않습니다.')
@@ -207,4 +212,5 @@ function ListingDetailPage() {
 }
 
 export default ListingDetailPage
+
 

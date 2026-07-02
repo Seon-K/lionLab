@@ -18,16 +18,20 @@ export function saveListingOwner(listingId, sellerName, password) {
   const owners = readOwners()
   owners[String(listingId)] = {
     sellerName: sellerName.trim(),
-    password,
+    password: password.trim(),
   }
   writeOwners(owners)
+}
+
+export function hasListingOwner(listingId) {
+  return Boolean(readOwners()[String(listingId)])
 }
 
 export function verifyListingOwner(listingId, sellerName, password) {
   const owner = readOwners()[String(listingId)]
   if (!owner) return false
 
-  return owner.sellerName === sellerName.trim() && owner.password === password
+  return owner.sellerName === sellerName.trim() && owner.password === password.trim()
 }
 
 export function removeListingOwner(listingId) {
@@ -35,8 +39,8 @@ export function removeListingOwner(listingId) {
   delete owners[String(listingId)]
   writeOwners(owners)
 }
+
 export function getListingOwnerName(listingId) {
   const owner = readOwners()[String(listingId)]
   return owner?.sellerName ?? ''
 }
-

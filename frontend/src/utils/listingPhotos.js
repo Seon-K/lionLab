@@ -9,7 +9,12 @@ function readStore() {
 }
 
 function writeStore(value) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function readListingPhotos(listingId) {
@@ -18,7 +23,7 @@ export function readListingPhotos(listingId) {
 }
 
 export function saveListingPhotos(listingId, photos) {
-  if (!listingId) return
+  if (!listingId) return false
 
   const store = readStore()
   store[String(listingId)] = photos.slice(0, 3).map((photo, index) => ({
@@ -26,7 +31,7 @@ export function saveListingPhotos(listingId, photos) {
     name: photo.name || `책 상태 사진 ${index + 1}`,
     src: photo.src,
   }))
-  writeStore(store)
+  return writeStore(store)
 }
 
 export function removeListingPhotos(listingId) {

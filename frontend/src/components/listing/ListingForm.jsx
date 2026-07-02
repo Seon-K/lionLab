@@ -49,15 +49,28 @@ function getBookKey(book) {
   return book?.isbn || book?.id || book?.title;
 }
 
-function fileToDataUrl(file) {
+function fileToCompressedDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxSize = 1200;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.72));
+      };
+      image.onerror = reject;
+      image.src = reader.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
-
 function mergeBookResults(...groups) {
   const seen = new Set();
   return groups.flat().filter((book) => {
@@ -318,18 +331,25 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
       : mode === "edit" && initialValues?.id
         ? await updateListing(initialValues.id, payload)
         : await createListing(payload);
-    if (saved?.id) {
-      const savedPhotos = await Promise.all(
-        conditionPhotos.map(async (photo, index) => ({
-          id: photo.id || `${saved.id}-${index}`,
-          name: photo.name || `책 상태 사진 ${index + 1}`,
-          src: photo.file ? await fileToDataUrl(photo.file) : photo.src || photo.preview,
-        })),
-      );
-      saveListingPhotos(saved.id, savedPhotos);
-    }
     if (saved?.id && form.seller_name && form.delete_password) {
       saveListingOwner(saved.id, form.seller_name, form.delete_password);
+    }
+    if (saved?.id && conditionPhotos.length > 0) {
+      try {
+        const savedPhotos = await Promise.all(
+          conditionPhotos.map(async (photo, index) => ({
+            id: photo.id || `${saved.id}-${index}`,
+            name: photo.name || `책 상태 사진 ${index + 1}`,
+            src: photo.file ? await fileToCompressedDataUrl(photo.file) : photo.src || photo.preview,
+          })),
+        );
+        const didSavePhotos = saveListingPhotos(saved.id, savedPhotos);
+        if (!didSavePhotos) {
+          window.alert("사진 용량이 커서 이 브라우저에 저장하지 못했습니다. 판매글 정보는 저장되었습니다.");
+        }
+      } catch {
+        window.alert("사진을 저장하는 중 문제가 발생했습니다. 판매글 정보는 저장되었습니다.");
+      }
     }
     navigate(
       mode === "edit" && saved?.id ? `/listings/${saved.id}` : "/listings",
@@ -661,5 +681,4 @@ function ListingForm({ mode = "create", initialValues, onSubmit }) {
 }
 
 export default ListingForm;
-
 
