@@ -1,31 +1,27 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getCourses } from '../api/courseApi'
 import { getListings } from '../api/listingApi'
 import BookSearch from '../components/book/BookSearch'
 import Loading from '../components/common/Loading'
-import CourseCard from '../components/course/CourseCard'
 import ListingCard from '../components/listing/ListingCard'
 
 function HomePage() {
   const [query, setQuery] = useState('')
-  const [courses, setCourses] = useState([])
   const [listings, setListings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    Promise.all([getListings({ ordering: '-created_at' }), getCourses()])
-      .then(([listingData, courseData]) => {
+    getListings({ ordering: '-created_at' })
+      .then((listingData) => {
         setListings(listingData.slice(0, 4))
-        setCourses(courseData.slice(0, 2))
       })
       .finally(() => setIsLoading(false))
   }, [])
 
   const handleSearch = (event) => {
     event.preventDefault()
-    navigate(query.trim() ? `/books?q=${encodeURIComponent(query)}` : '/books')
+    navigate(query.trim() ? `/listings?q=${encodeURIComponent(query)}` : '/listings')
   }
 
   return (
@@ -77,7 +73,7 @@ function HomePage() {
             <h2>최근 올라온 교재</h2>
             <p>지금 바로 거래 가능한 인기 교재입니다.</p>
           </div>
-          <Link to="/books">교재 더 보기 +</Link>
+          <Link to="/listings">교재 더 보기 +</Link>
         </div>
         {isLoading ? (
           <Loading />
@@ -98,16 +94,9 @@ function HomePage() {
         </div>
         <span className="banner-icon">◇</span>
       </section>
-
-      <section className="section compact-section">
-        <div className="course-row">
-          {courses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
-      </section>
     </main>
   )
 }
 
 export default HomePage
+

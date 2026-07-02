@@ -7,7 +7,7 @@ function Header() {
 
   const handleSubmit = (event) => {
     event.preventDefault()
-    navigate(keyword.trim() ? `/books?q=${encodeURIComponent(keyword)}` : '/books')
+    navigate(keyword.trim() ? `/listings?q=${encodeURIComponent(keyword)}` : '/listings')
   }
 
   return (
@@ -18,7 +18,7 @@ function Header() {
       </Link>
       <nav className="gnb" aria-label="주요 메뉴">
         <NavLink to="/">Home</NavLink>
-        <NavLink to="/books">Textbooks</NavLink>
+        <NavLink to="/listings">Textbooks</NavLink>
         <NavLink to="/courses">Classes</NavLink>
       </nav>
       <form className="header-actions" onSubmit={handleSubmit}>
@@ -37,3 +37,4 @@ function Header() {
 }
 
 export default Header
+

@@ -18,7 +18,7 @@ function BookCard({ book, listing, variant = 'grid' }) {
           <em>{formatPrice(book.original_price)}</em>
         </div>
       </div>
-      {listing && <span className="card-link-text">상세 보기</span>}
+      {listing ? <span className="card-link-text">상세 보기</span> : <span className="card-link-text card-link-disabled">판매글 없음</span>}
     </>
   )
 
@@ -34,3 +34,4 @@ function BookCard({ book, listing, variant = 'grid' }) {
 }
 
 export default BookCard
+

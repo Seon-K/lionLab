@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { getListings } from '../api/listingApi'
 import EmptyState from '../components/common/EmptyState'
 import Loading from '../components/common/Loading'
@@ -11,20 +12,43 @@ const STATUS_TO_API = {
   판매완료: 'done',
 }
 
+function getPageSize() {
+  if (typeof window === 'undefined') return 8
+  if (window.matchMedia('(max-width: 640px)').matches) return 4
+  if (window.matchMedia('(max-width: 1024px)').matches) return 6
+  return 8
+}
+
 function ListingListPage() {
-  const [keyword, setKeyword] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [keyword, setKeyword] = useState(searchParams.get('q') ?? '')
   const [status, setStatus] = useState('전체')
   const [condition, setCondition] = useState('전체')
   const [sort, setSort] = useState('latest')
   const [listings, setListings] = useState([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(getPageSize)
   const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const syncPageSize = () => {
+      setPageSize(getPageSize())
+      setPage(1)
+    }
+    window.addEventListener('resize', syncPageSize)
+    return () => window.removeEventListener('resize', syncPageSize)
+  }, [])
+
 
   useEffect(() => {
     getListings({
       search: keyword.trim(),
       ordering: sort === 'price-low' ? 'price' : sort === 'price-high' ? '-price' : '-created_at',
     })
-      .then(setListings)
+      .then((data) => {
+        setListings(data.filter((listing) => listing.book))
+        setPage(1)
+      })
       .finally(() => setIsLoading(false))
   }, [keyword, sort])
 
@@ -35,6 +59,21 @@ function ListingListPage() {
       return matchesStatus && matchesCondition
     })
   }, [condition, listings, status])
+
+
+  const pageCount = Math.max(1, Math.ceil(filteredListings.length / pageSize))
+  const pagedListings = filteredListings.slice((page - 1) * pageSize, page * pageSize)
+
+  const handleKeywordChange = (event) => {
+    const value = event.target.value
+    setKeyword(value)
+    setSearchParams(value.trim() ? { q: value } : {})
+  }
+
+  const movePage = (nextPage) => {
+    setPage(Math.min(Math.max(nextPage, 1), pageCount))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <main className="page listing-list-page">
@@ -52,13 +91,13 @@ function ListingListPage() {
           검색
           <input
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={handleKeywordChange}
             placeholder="책 제목, ISBN, 수업명, 학과 검색"
           />
         </label>
         <label>
           판매 상태
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1) }}>
             <option value="전체">전체</option>
             <option value="판매중">판매중</option>
             <option value="예약중">예약중</option>
@@ -67,7 +106,7 @@ function ListingListPage() {
         </label>
         <label>
           책 상태
-          <select value={condition} onChange={(event) => setCondition(event.target.value)}>
+          <select value={condition} onChange={(event) => { setCondition(event.target.value); setPage(1) }}>
             <option value="전체">전체</option>
             <option value="상">상</option>
             <option value="중">중</option>
@@ -87,11 +126,29 @@ function ListingListPage() {
       {isLoading ? (
         <Loading />
       ) : filteredListings.length > 0 ? (
-        <section className="book-grid">
-          {filteredListings.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
-        </section>
+        <>
+          <section className="book-grid listing-grid">
+            {pagedListings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </section>
+          {filteredListings.length > pageSize && (
+            <nav className="pagination" aria-label="중고 교재 페이지">
+              <button type="button" onClick={() => movePage(page - 1)} disabled={page === 1}>‹</button>
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+                <button
+                  key={pageNumber}
+                  className={page === pageNumber ? 'active' : ''}
+                  type="button"
+                  onClick={() => movePage(pageNumber)}
+                >
+                  {pageNumber}
+                </button>
+              ))}
+              <button type="button" onClick={() => movePage(page + 1)} disabled={page === pageCount}>›</button>
+            </nav>
+          )}
+        </>
       ) : (
         <EmptyState title="조건에 맞는 판매글이 없습니다." description="검색어를 줄이거나 필터를 전체로 변경해 보세요." />
       )}
@@ -100,5 +157,4 @@ function ListingListPage() {
 }
 
 export default ListingListPage
-
 
